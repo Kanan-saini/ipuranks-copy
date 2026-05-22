@@ -3,6 +3,8 @@ import '../widgets/custom_button.dart';
 import '../widgets/input_field.dart';
 import '../widgets/liquid_background.dart';
 import 'result_dashboard.dart';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   final String enrollmentNumber;
@@ -19,15 +21,23 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   late TextEditingController _passwordController;
+  late TextEditingController _captchaController;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   bool _isLoading = false;
+  bool _isCaptchaLoading = false;
+  Uint8List? _captchaBytes;
+  String? _captchaError;
+
+  static const String _captchaEndpoint =
+      'https://ipuranks.abhii.app/api/v1/captcha/generate';
 
   @override
   void initState() {
     super.initState();
     _passwordController = TextEditingController();
+    _captchaController = TextEditingController();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -43,13 +53,62 @@ class _LoginScreenState extends State<LoginScreen>
     );
 
     _animationController.forward();
+    _fetchCaptcha();
   }
 
   @override
   void dispose() {
     _passwordController.dispose();
+    _captchaController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchCaptcha() async {
+    if (mounted) {
+      setState(() {
+        _isCaptchaLoading = true;
+        _captchaError = null;
+        _captchaBytes = null;
+      });
+    }
+    _captchaController.clear();
+
+    try {
+      final uri = Uri.parse(_captchaEndpoint).replace(
+        queryParameters: {
+          't': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
+      );
+      final response = await http.get(
+        uri,
+        headers: const {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _captchaBytes = response.bodyBytes;
+          _isCaptchaLoading = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() {
+          _captchaBytes = null;
+          _captchaError = 'Failed to load captcha. Please try again.';
+          _isCaptchaLoading = false;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _captchaBytes = null;
+        _captchaError = 'Unable to fetch captcha. Check your connection.';
+        _isCaptchaLoading = false;
+      });
+    }
   }
 
   void _handleLogin() {
@@ -334,7 +393,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                       const SizedBox(height: 24),
 
-                      // Captcha placeholder
+                      // Captcha
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: 1),
                         duration: const Duration(milliseconds: 1200),
@@ -345,92 +404,153 @@ class _LoginScreenState extends State<LoginScreen>
                             child: child,
                           );
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withOpacity(0.06),
-                                Colors.white.withOpacity(0.02),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.12),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.05),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: const Color(0xFF84cc16),
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Color(0xFF84cc16),
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'I\'m not a robot',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'reCAPTCHA',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.5),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withOpacity(0.06),
+                                    Colors.white.withOpacity(0.02),
                                   ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                              ),
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.1),
-                                    width: 1,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.12),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.05),
+                                    blurRadius: 20,
+                                    spreadRadius: 2,
                                   ),
-                                ),
-                                child: const Icon(
-                                  Icons.security,
-                                  color: Color(0xFF84cc16),
-                                  size: 20,
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.security,
+                                        color: Color(0xFF84cc16),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Expanded(
+                                        child: Text(
+                                          'Captcha Verification',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: _isCaptchaLoading
+                                            ? null
+                                            : _fetchCaptcha,
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.08),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Colors.white.withOpacity(0.1),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.refresh,
+                                            color: Colors.white.withOpacity(0.8),
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    height: 90,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.04),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.1),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: _isCaptchaLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Color(0xFF84cc16),
+                                              ),
+                                              strokeWidth: 3,
+                                            ),
+                                          )
+                                        : _captchaBytes != null
+                                            ? ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: Image.memory(
+                                                  _captchaBytes!,
+                                                  fit: BoxFit.contain,
+                                                  gaplessPlayback: true,
+                                                ),
+                                              )
+                                            : Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                ),
+                                                child: Text(
+                                                  _captchaError ??
+                                                      'Captcha unavailable.',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    color: Colors.white
+                                                        .withOpacity(0.6),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                ),
+                                              ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF6366f1)
+                                        .withOpacity(0.15),
+                                    blurRadius: 25,
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: InputField(
+                                placeholder: 'Enter captcha text',
+                                controller: _captchaController,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 

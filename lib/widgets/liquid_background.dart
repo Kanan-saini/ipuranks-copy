@@ -150,7 +150,7 @@ class _LiquidBackgroundState extends State<LiquidBackground>
                         height: 200,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFec4899).withOpacity(0.04),
+                          color: const Color.fromARGB(255, 56, 59, 141).withOpacity(0.04),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFFec4899).withOpacity(0.06),
