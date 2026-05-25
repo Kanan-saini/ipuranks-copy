@@ -47,7 +47,9 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
   }
 
   void _navigateToLogin() {
-    if (_enrollmentController.text.isEmpty) {
+    final enrollmentNumber = _enrollmentController.text.trim();
+
+    if (enrollmentNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter enrollment number'),
@@ -61,7 +63,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            LoginScreen(enrollmentNumber: _enrollmentController.text),
+            LoginScreen(enrollmentNumber: enrollmentNumber),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;

@@ -45,9 +45,15 @@ class MyApp extends StatelessWidget {
             );
 
           case '/results':
+            final args = settings.arguments;
+            final resultArgs = args is ResultScreenArgs ? args : null;
             return PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
-                  const ResultDashboard(),
+                  ResultDashboard(
+                    groupedResult: resultArgs?.groupedResult,
+                    errorMessage: resultArgs?.errorMessage,
+                    showLoading: resultArgs?.showLoading ?? true,
+                  ),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
                 return FadeTransition(
                   opacity: animation,
