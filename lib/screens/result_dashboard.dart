@@ -295,12 +295,17 @@ class _ResultDashboardState extends State<ResultDashboard>
     }
 
     final groupedResult = widget.groupedResult;
+    final summary = groupedResult?.summary;
     final semesters = groupedResult?.semesters ?? const [];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
       children: [
-        if (groupedResult != null) StudentInfoCard(info: groupedResult.student),
+        if (groupedResult != null)
+          StudentInfoCard(
+            info: groupedResult.student,
+            summary: summary,
+          ),
         if (groupedResult != null) const SizedBox(height: 20),
         if (semesters.isEmpty)
           _buildEmptyState()

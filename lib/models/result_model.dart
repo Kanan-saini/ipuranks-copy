@@ -228,7 +228,15 @@ class FlatResultRecord {
       resultYear: _stringValue(json, ['ryear', 'resultYear']),
       declaredDate: _stringValue(json, ['declareddate', 'declaredDate']),
       gpa: _nullableDoubleValue(json, ['eugpa', 'gpa', 'sgpa']),
-      credits: _nullableDoubleValue(json, ['credits', 'credit']),
+      credits: _nullableDoubleValue(json, [
+        'credits',
+        'credit',
+        'papercredit',
+        'paperCredit',
+        'subjectcredit',
+        'subjectCredit',
+        'crd',
+      ]),
     );
   }
 }
@@ -264,12 +272,16 @@ class SemesterResult {
   final double? gpa;
   final double? credits;
   final List<FlatResultRecord> subjects;
+  final double? calculatedSgpa;
+  final double? calculatedCredits;
 
   SemesterResult({
     required this.semester,
     required this.gpa,
     required this.credits,
     required this.subjects,
+    required this.calculatedSgpa,
+    required this.calculatedCredits,
   });
 
   factory SemesterResult.fromRecords(
@@ -284,11 +296,16 @@ class SemesterResult {
       credits ??= record.credits;
     }
 
+    final calculatedCredits = _calculateSemesterCredits(records);
+    final calculatedSgpa = _calculateSemesterSgpa(records, calculatedCredits);
+
     return SemesterResult(
       semester: semester,
       gpa: gpa,
       credits: credits,
       subjects: records,
+      calculatedSgpa: calculatedSgpa,
+      calculatedCredits: calculatedCredits,
     );
   }
 }
@@ -301,6 +318,33 @@ class GroupedResult {
     required this.student,
     required this.semesters,
   });
+
+  ResultSummary get summary {
+    final validSemesters = semesters.where(
+      (semester) => _resolvedSemesterCredits(semester) > 0,
+    );
+
+    double totalCredits = 0;
+    double weightedSgpa = 0;
+
+    for (final semester in validSemesters) {
+      final credits = _resolvedSemesterCredits(semester);
+      final sgpa = semester.calculatedSgpa ?? _positiveOrNull(semester.gpa);
+      if (credits <= 0 || sgpa == null) {
+        continue;
+      }
+      totalCredits += credits;
+      weightedSgpa += sgpa * credits;
+    }
+
+    final cgpa = totalCredits > 0 ? weightedSgpa / totalCredits : null;
+
+    return ResultSummary(
+      cgpa: cgpa,
+      totalCredits: totalCredits > 0 ? totalCredits : null,
+      semestersCompleted: validSemesters.length,
+    );
+  }
 
   factory GroupedResult.fromRecords(List<FlatResultRecord> records) {
     if (records.isEmpty) {
@@ -339,6 +383,37 @@ class GroupedResult {
       student: StudentInfo.fromRecord(records.first),
       semesters: semesters,
     );
+  }
+}
+
+class ResultSummary {
+  final double? cgpa;
+  final double? totalCredits;
+  final int semestersCompleted;
+
+  ResultSummary({
+    required this.cgpa,
+    required this.totalCredits,
+    required this.semestersCompleted,
+  });
+}
+
+class CreditCatalog {
+  static Map<String, double> _catalog = const {};
+
+  static void setCatalog(Map<String, double> catalog) {
+    _catalog = catalog;
+  }
+
+  static double? lookup(String code) {
+    if (_catalog.isEmpty) {
+      return null;
+    }
+    final normalized = code.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return _catalog[normalized];
   }
 }
 
@@ -451,6 +526,110 @@ double? _nullableDoubleValue(Map<String, dynamic> json, List<String> keys) {
     }
   }
   return null;
+}
+
+int? _resolveFinalMarks(FlatResultRecord record) {
+  if (record.finalMarks != null) {
+    return record.finalMarks;
+  }
+  if (record.internalMarks == null || record.externalMarks == null) {
+    return null;
+  }
+  return record.internalMarks! + record.externalMarks!;
+}
+
+double _resolvedSemesterCredits(SemesterResult semester) {
+  final calculated = semester.calculatedCredits;
+  if (calculated != null && calculated > 0) {
+    return calculated;
+  }
+  final rawCredits = semester.credits ?? 0;
+  return rawCredits > 0 ? rawCredits : 0;
+}
+
+double? _calculateSemesterCredits(List<FlatResultRecord> records) {
+  double totalCredits = 0;
+  for (final record in records) {
+    final credits = _resolveRecordCredits(record);
+    if (credits > 0) {
+      totalCredits += credits;
+    }
+  }
+  if (totalCredits <= 0) {
+    return null;
+  }
+  return totalCredits;
+}
+
+double? _calculateSemesterSgpa(
+  List<FlatResultRecord> records,
+  double? totalCredits,
+) {
+  if (totalCredits == null || totalCredits <= 0) {
+    return null;
+  }
+
+  double totalGradePoints = 0;
+
+  for (final record in records) {
+    final credits = _resolveRecordCredits(record);
+    if (credits <= 0) {
+      continue;
+    }
+    final marks = _resolveFinalMarks(record);
+    if (marks == null) {
+      continue;
+    }
+    final gradePoint = _gradePointFromMarks(marks);
+    totalGradePoints += gradePoint * credits;
+  }
+
+  if (totalGradePoints <= 0) {
+    return null;
+  }
+
+  return totalGradePoints / totalCredits;
+}
+
+double _gradePointFromMarks(int marks) {
+  if (marks >= 90) {
+    return 10;
+  }
+  if (marks >= 80) {
+    return 9;
+  }
+  if (marks >= 70) {
+    return 8;
+  }
+  if (marks >= 60) {
+    return 7;
+  }
+  if (marks >= 50) {
+    return 6;
+  }
+  if (marks >= 45) {
+    return 5;
+  }
+  if (marks >= 40) {
+    return 4;
+  }
+  return 0;
+}
+
+double _resolveRecordCredits(FlatResultRecord record) {
+  final directCredits = record.credits ?? 0;
+  if (directCredits > 0) {
+    return directCredits;
+  }
+  final lookupCredits = CreditCatalog.lookup(record.paperCode) ?? 0;
+  return lookupCredits > 0 ? lookupCredits : 0;
+}
+
+double? _positiveOrNull(double? value) {
+  if (value == null) {
+    return null;
+  }
+  return value > 0 ? value : null;
 }
 
 bool _boolValue(Map<String, dynamic> json, List<String> keys) {

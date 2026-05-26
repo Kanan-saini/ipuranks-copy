@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'screens/enrollment_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/result_dashboard.dart';
+import 'services/credit_catalog.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await CreditCatalogService.loadCatalog();
   runApp(const MyApp());
 }
 

@@ -43,14 +43,14 @@ class SemesterCard extends StatelessWidget {
                 ),
               ),
               _buildSummaryChip(
-                'GPA',
-                _formatNumber(result.gpa, decimals: 2),
+                'SGPA',
+                _formatNumber(_resolveSgpa(), decimals: 2),
                 const Color(0xFF6366f1),
               ),
               const SizedBox(width: 8),
               _buildSummaryChip(
                 'Credits',
-                _formatNumber(result.credits, decimals: 0),
+                _formatNumber(_resolveCredits(), decimals: 0),
                 const Color(0xFF84cc16),
               ),
             ],
@@ -108,5 +108,25 @@ class SemesterCard extends StatelessWidget {
       return '-';
     }
     return value.toStringAsFixed(decimals);
+  }
+
+  double? _resolveSgpa() {
+    if (result.calculatedSgpa != null) {
+      return result.calculatedSgpa;
+    }
+    if (result.gpa != null && result.gpa! > 0) {
+      return result.gpa;
+    }
+    return null;
+  }
+
+  double? _resolveCredits() {
+    if (result.calculatedCredits != null && result.calculatedCredits! > 0) {
+      return result.calculatedCredits;
+    }
+    if (result.credits != null && result.credits! > 0) {
+      return result.credits;
+    }
+    return null;
   }
 }
