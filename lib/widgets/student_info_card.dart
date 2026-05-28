@@ -19,21 +19,21 @@ class StudentInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         gradient: LinearGradient(
           colors: [
-            Colors.white.withOpacity(0.08),
-            Colors.white.withOpacity(0.03),
+            const Color(0xFF0B132B).withOpacity(0.75),
+            const Color(0xFF0F1B3D).withOpacity(0.55),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         border: Border.all(
-          color: Colors.white.withOpacity(0.12),
-          width: 1.5,
+          color: Colors.white.withOpacity(0.14),
+          width: 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF38BDF8).withOpacity(0.18),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -44,7 +44,7 @@ class StudentInfoCard extends StatelessWidget {
             _displayValue(info.name).toUpperCase(),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: 21,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.6,
             ),
@@ -114,7 +114,7 @@ class StudentInfoCard extends StatelessWidget {
         Text(
           _formatNumber(summary.cgpa, decimals: 2),
           style: const TextStyle(
-            color: Color(0xFF84cc16),
+            color: Color(0xFF38BDF8),
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
@@ -131,12 +131,12 @@ class StudentInfoCard extends StatelessWidget {
         _buildStatChip(
           'Total Credits',
           _formatNumber(summary.totalCredits, decimals: 0),
-          const Color(0xFF6366f1),
+          const Color(0xFF3B82F6),
         ),
         _buildStatChip(
           'Semesters',
           summary.semestersCompleted.toString(),
-          const Color(0xFFec4899),
+          const Color(0xFF7C3AED),
         ),
       ],
     );
@@ -147,8 +147,8 @@ class StudentInfoCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: color.withOpacity(0.18),
-        border: Border.all(color: color.withOpacity(0.4)),
+        color: color.withOpacity(0.16),
+        border: Border.all(color: color.withOpacity(0.45)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

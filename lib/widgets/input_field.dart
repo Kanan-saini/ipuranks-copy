@@ -38,13 +38,13 @@ class _InputFieldState extends State<InputField> {
       },
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: _isFocused
               ? [
                   BoxShadow(
-                    color: const Color(0xFF84cc16).withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 0,
+                    color: const Color(0xFF38BDF8).withOpacity(0.35),
+                    blurRadius: 26,
+                    spreadRadius: 2,
                   ),
                 ]
               : [],
@@ -57,32 +57,32 @@ class _InputFieldState extends State<InputField> {
           decoration: InputDecoration(
             hintText: widget.placeholder,
             hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.5),
-              fontSize: 16,
+              color: Colors.white.withOpacity(0.55),
+              fontSize: 15,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.1),
-                width: 1.5,
+                color: Colors.white.withOpacity(0.12),
+                width: 1.2,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.1),
-                width: 1.5,
+                color: Colors.white.withOpacity(0.12),
+                width: 1.2,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               borderSide: const BorderSide(
-                color: Color(0xFF84cc16),
+                color: Color(0xFF38BDF8),
                 width: 2,
               ),
             ),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: const Color(0xFF0B132B).withOpacity(0.65),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
               vertical: 18,
@@ -94,7 +94,7 @@ class _InputFieldState extends State<InputField> {
                     },
                     child: Icon(
                       _obscureText ? Icons.visibility_off : Icons.visibility,
-                      color: const Color(0xFF84cc16),
+                      color: const Color(0xFF38BDF8),
                       size: 22,
                     ),
                   )
@@ -104,7 +104,7 @@ class _InputFieldState extends State<InputField> {
             color: Colors.white,
             fontSize: 16,
           ),
-          cursorColor: const Color(0xFF84cc16),
+          cursorColor: const Color(0xFF38BDF8),
         ),
       ),
     );

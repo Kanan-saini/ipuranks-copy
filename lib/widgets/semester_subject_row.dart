@@ -30,12 +30,26 @@ class SemesterSubjectRow extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity(0.05),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1.2,
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF0B132B).withOpacity(0.75),
+              const Color(0xFF0F1B3D).withOpacity(0.55),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.12),
+            width: 1.1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3B82F6).withOpacity(0.12),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,6 +57,22 @@ class SemesterSubjectRow extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 3,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF38BDF8),
+                        Color(0xFF3B82F6),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +101,7 @@ class SemesterSubjectRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildStatusChip(record.status),
+                _buildStatusChip(record.finalMarks),
               ],
             ),
             const SizedBox(height: 12),
@@ -79,9 +109,9 @@ class SemesterSubjectRow extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildMarkChip('Internal', record.internalMarks, const Color(0xFF6366f1)),
-                _buildMarkChip('External', record.externalMarks, const Color(0xFFec4899)),
-                _buildMarkChip('Final', record.finalMarks, const Color(0xFF84cc16)),
+                _buildMarkChip('Internal', record.internalMarks, const Color(0xFF3B82F6)),
+                _buildMarkChip('External', record.externalMarks, const Color(0xFF7C3AED)),
+                _buildMarkChip('Final', record.finalMarks, const Color(0xFF38BDF8)),
               ],
             ),
           ],
@@ -125,12 +155,12 @@ class SemesterSubjectRow extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    final normalized = status.trim().toUpperCase();
-    final isPass = normalized.isEmpty || normalized == 'P' || normalized == 'PASS';
-
-    final color = isPass ? const Color(0xFF84cc16) : const Color(0xFFec4899);
-    final label = normalized.isEmpty ? 'N/A' : normalized;
+  Widget _buildStatusChip(int? finalMarks) {
+    final grade = finalMarks == null
+        ? ''
+        : _marksToGrade(finalMarks.toDouble());
+    final label = grade.isEmpty ? 'N/A' : grade;
+    final color = _gradeColor(grade);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -148,5 +178,78 @@ class SemesterSubjectRow extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _gradeFromStatus(String raw) {
+    if (raw.isEmpty) {
+      return '';
+    }
+
+    final upper = raw.toUpperCase();
+    if (upper == 'PASS') {
+      return 'P';
+    }
+    if (upper == 'FAIL') {
+      return 'F';
+    }
+    if (upper == 'P' || upper == 'F') {
+      return upper;
+    }
+
+    final value = double.tryParse(raw);
+    if (value == null) {
+      return upper;
+    }
+
+    if (value <= 10) {
+      return _sgpaToGrade(value);
+    }
+
+    return _marksToGrade(value);
+  }
+
+  String _marksToGrade(double marks) {
+    if (marks >= 90 && marks <= 100) return 'O';
+    if (marks >= 75 && marks <= 89) return 'A+';
+    if (marks >= 65 && marks <= 74) return 'A';
+    if (marks >= 55 && marks <= 64) return 'B+';
+    if (marks >= 50 && marks <= 54) return 'B';
+    if (marks >= 45 && marks <= 49) return 'C';
+    if (marks >= 40 && marks <= 44) return 'P';
+    return 'F';
+  }
+
+  String _sgpaToGrade(double sgpa) {
+    if (sgpa >= 9.0) return 'O';
+    if (sgpa >= 7.5) return 'A+';
+    if (sgpa >= 6.5) return 'A';
+    if (sgpa >= 5.5) return 'B+';
+    if (sgpa >= 5.0) return 'B';
+    if (sgpa >= 4.5) return 'C';
+    if (sgpa >= 4.0) return 'P';
+    return 'F';
+  }
+
+  Color _gradeColor(String grade) {
+    switch (grade) {
+      case 'O':
+        return const Color(0xFF34D399);
+      case 'A+':
+        return const Color(0xFF86EFAC);
+      case 'A':
+        return const Color(0xFF5EEAD4);
+      case 'B+':
+        return const Color(0xFFFBBF24);
+      case 'B':
+        return const Color(0xFFF59E0B);
+      case 'C':
+        return const Color(0xFFF59E0B);
+      case 'P':
+        return const Color(0xFFFB7185);
+      case 'F':
+        return const Color(0xFFF43F5E);
+      default:
+        return const Color(0xFF94A3B8);
+    }
   }
 }

@@ -69,21 +69,25 @@ class _CustomButtonState extends State<CustomButton>
             gradient: widget.useGradient
                 ? LinearGradient(
                     colors: [
-                      const Color(0xFF84cc16),
-                      const Color(0xFF65a30d),
+                      const Color(0xFF38BDF8),
+                      const Color(0xFF3B82F6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
                 : null,
             color: !widget.useGradient ? widget.backgroundColor : null,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: const Color(0xFF7DD3FC).withOpacity(0.5),
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF84cc16).withOpacity(0.4),
-                blurRadius: 20,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
+                color: const Color(0xFF38BDF8).withOpacity(0.45),
+                blurRadius: 24,
+                spreadRadius: 1,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -91,16 +95,17 @@ class _CustomButtonState extends State<CustomButton>
             color: Colors.transparent,
             child: InkWell(
               onTap: widget.onPressed,
-              splashColor: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              splashColor: Colors.white.withOpacity(0.12),
+              highlightColor: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(18),
               child: Center(
                 child: Text(
                   widget.text,
                   style: const TextStyle(
-                    color: Color(0xFF0a0e27),
+                    color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.6,
                   ),
                 ),
               ),

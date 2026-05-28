@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/enrollment_screen.dart';
-import 'screens/login_screen.dart';
 import 'screens/result_dashboard.dart';
 import 'services/credit_catalog.dart';
 
@@ -21,32 +20,27 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0a0e27),
+        scaffoldBackgroundColor: const Color(0xFF070B16),
         fontFamily: 'Poppins',
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF38BDF8),
+          secondary: Color(0xFF3B82F6),
+          surface: Color(0xFF0B132B),
+          background: Color(0xFF070B16),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: Colors.white,
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Color(0xFF0B132B),
+          contentTextStyle: TextStyle(color: Colors.white),
+        ),
       ),
       home: const EnrollmentScreen(),
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case '/login':
-            final enrollmentNumber = settings.arguments as String;
-            return PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  LoginScreen(enrollmentNumber: enrollmentNumber),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                const begin = Offset(1.0, 0.0);
-                const end = Offset.zero;
-                const curve = Curves.easeInOutCubic;
-
-                final tween = Tween(begin: begin, end: end)
-                    .chain(CurveTween(curve: curve));
-
-                return SlideTransition(
-                  position: animation.drive(tween),
-                  child: child,
-                );
-              },
-            );
-
           case '/results':
             final args = settings.arguments;
             final resultArgs = args is ResultScreenArgs ? args : null;
@@ -67,7 +61,7 @@ class MyApp extends StatelessWidget {
 
           default:
             return null;
-        }
+        } 
       },
     );
   }

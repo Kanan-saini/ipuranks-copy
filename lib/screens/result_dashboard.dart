@@ -67,9 +67,9 @@ class _ResultDashboardState extends State<ResultDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0a0e27),
+      backgroundColor: const Color(0xFF070B16),
       body: LiquidBackground(
-        primaryColor: const Color(0xFFec4899),
+        primaryColor: const Color(0xFF38BDF8),
         child: SafeArea(
           child: Column(
             children: [
@@ -95,8 +95,8 @@ class _ResultDashboardState extends State<ResultDashboard>
                           ShaderMask(
                             shaderCallback: (bounds) => LinearGradient(
                               colors: [
-                                const Color(0xFFec4899),
-                                const Color(0xFF84cc16),
+                                const Color(0xFF7DD3FC),
+                                const Color(0xFF3B82F6),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -105,18 +105,18 @@ class _ResultDashboardState extends State<ResultDashboard>
                               'Results',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 40,
+                                fontSize: 38,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 1.5,
+                                letterSpacing: 1.4,
                               ),
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Academic Performance',
+                            'Academic Performance Dashboard',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.6),
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w500,
                               letterSpacing: 0.3,
                             ),
@@ -149,9 +149,9 @@ class _ResultDashboardState extends State<ResultDashboard>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.05),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
+                                  color: const Color(0xFF38BDF8).withOpacity(0.25),
+                                  blurRadius: 18,
+                                  spreadRadius: 1,
                                 ),
                               ],
                             ),
@@ -202,7 +202,7 @@ class _ResultDashboardState extends State<ResultDashboard>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF84cc16).withOpacity(0.3),
+                            color: const Color(0xFF38BDF8).withOpacity(0.35),
                       width: 3,
                     ),
                   ),
@@ -216,7 +216,7 @@ class _ResultDashboardState extends State<ResultDashboard>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF6366f1).withOpacity(0.3),
+                            color: const Color(0xFF3B82F6).withOpacity(0.35),
                       width: 2,
                     ),
                   ),
@@ -229,8 +229,8 @@ class _ResultDashboardState extends State<ResultDashboard>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF84cc16).withOpacity(0.3),
-                      const Color(0xFF84cc16).withOpacity(0),
+                            const Color(0xFF38BDF8).withOpacity(0.4),
+                            const Color(0xFF38BDF8).withOpacity(0),
                     ],
                   ),
                 ),
@@ -240,12 +240,12 @@ class _ResultDashboardState extends State<ResultDashboard>
                 height: 16,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF84cc16),
+                        color: const Color(0xFF38BDF8),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF84cc16).withOpacity(0.6),
-                      blurRadius: 20,
-                      spreadRadius: 4,
+                            color: const Color(0xFF38BDF8).withOpacity(0.7),
+                            blurRadius: 24,
+                            spreadRadius: 5,
                     ),
                   ],
                 ),
@@ -274,7 +274,7 @@ class _ResultDashboardState extends State<ResultDashboard>
               ),
               const SizedBox(height: 8),
               Text(
-                'Processing your academic data',
+                'Syncing your academic data',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.6),
                   fontSize: 14,
@@ -325,15 +325,22 @@ class _ResultDashboardState extends State<ResultDashboard>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.05),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF0B132B).withOpacity(0.7),
+            const Color(0xFF0F1B3D).withOpacity(0.55),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1.5,
+          color: Colors.white.withOpacity(0.12),
+          width: 1.4,
         ),
       ),
       child: Column(
         children: [
-          const Icon(Icons.inbox, color: Color(0xFF84cc16), size: 40),
+          const Icon(Icons.inbox, color: Color(0xFF38BDF8), size: 40),
           const SizedBox(height: 12),
           const Text(
             'No results found',
@@ -364,16 +371,16 @@ class _ResultDashboardState extends State<ResultDashboard>
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: const Color(0xFFec4899).withOpacity(0.1),
+          color: const Color(0xFFF43F5E).withOpacity(0.1),
           border: Border.all(
-            color: const Color(0xFFec4899).withOpacity(0.4),
+            color: const Color(0xFFF43F5E).withOpacity(0.4),
             width: 1.5,
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: Color(0xFFec4899), size: 42),
+            const Icon(Icons.error_outline, color: Color(0xFFF43F5E), size: 42),
             const SizedBox(height: 12),
             const Text(
               'Unable to load results',

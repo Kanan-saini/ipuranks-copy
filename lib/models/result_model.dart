@@ -274,6 +274,9 @@ class SemesterResult {
   final List<FlatResultRecord> subjects;
   final double? calculatedSgpa;
   final double? calculatedCredits;
+  final double totalMarks;
+  final double maxMarks;
+  final double percentage;
 
   SemesterResult({
     required this.semester,
@@ -282,6 +285,9 @@ class SemesterResult {
     required this.subjects,
     required this.calculatedSgpa,
     required this.calculatedCredits,
+    required this.totalMarks,
+    required this.maxMarks,
+    required this.percentage,
   });
 
   factory SemesterResult.fromRecords(
@@ -296,16 +302,20 @@ class SemesterResult {
       credits ??= record.credits;
     }
 
-    final calculatedCredits = _calculateSemesterCredits(records);
-    final calculatedSgpa = _calculateSemesterSgpa(records, calculatedCredits);
+    final subjectsForDisplay = List<FlatResultRecord>.from(records)
+      ..sort((a, b) => a.paperCode.compareTo(b.paperCode));
+    final metrics = _calculateSemesterMetrics(records);
 
     return SemesterResult(
       semester: semester,
       gpa: gpa,
       credits: credits,
-      subjects: records,
-      calculatedSgpa: calculatedSgpa,
-      calculatedCredits: calculatedCredits,
+      subjects: subjectsForDisplay,
+      calculatedSgpa: metrics.sgpa,
+      calculatedCredits: metrics.semesterCredits,
+      totalMarks: metrics.totalMarks,
+      maxMarks: metrics.maxMarks,
+      percentage: metrics.percentage,
     );
   }
 }
@@ -329,19 +339,19 @@ class GroupedResult {
 
     for (final semester in validSemesters) {
       final credits = _resolvedSemesterCredits(semester);
-      final sgpa = semester.calculatedSgpa ?? _positiveOrNull(semester.gpa);
-      if (credits <= 0 || sgpa == null) {
+      final sgpa = semester.calculatedSgpa ?? 0;
+      if (credits <= 0) {
         continue;
       }
       totalCredits += credits;
       weightedSgpa += sgpa * credits;
     }
 
-    final cgpa = totalCredits > 0 ? weightedSgpa / totalCredits : null;
+    final cgpa = totalCredits > 0 ? weightedSgpa / totalCredits : 0.0;
 
     return ResultSummary(
       cgpa: cgpa,
-      totalCredits: totalCredits > 0 ? totalCredits : null,
+      totalCredits: totalCredits > 0 ? totalCredits : 0.0,
       semestersCompleted: validSemesters.length,
     );
   }
@@ -355,6 +365,7 @@ class GroupedResult {
           programName: '',
           instituteName: '',
           admissionYear: '',
+          
         ),
         semesters: const [],
       );
@@ -369,15 +380,7 @@ class GroupedResult {
     final semesters = grouped.entries
         .map((entry) => SemesterResult.fromRecords(entry.key, entry.value))
         .toList()
-      ..sort((a, b) {
-        if (a.semester == 0) {
-          return 1;
-        }
-        if (b.semester == 0) {
-          return -1;
-        }
-        return a.semester.compareTo(b.semester);
-      });
+      ..sort((a, b) => a.semester.compareTo(b.semester));
 
     return GroupedResult(
       student: StudentInfo.fromRecord(records.first),
@@ -415,6 +418,52 @@ class CreditCatalog {
     }
     return _catalog[normalized];
   }
+}
+
+class CumulativeData {
+  final String semester;
+  final String marks;
+  final String percentage;
+  final String gpa;
+
+  const CumulativeData({
+    required this.semester,
+    required this.marks,
+    required this.percentage,
+    required this.gpa,
+  });
+}
+
+class LineChartPoint {
+  final String name;
+  final double sgpa;
+  final double percentage;
+
+  const LineChartPoint({
+    required this.name,
+    required this.sgpa,
+    required this.percentage,
+  });
+}
+
+class RadarChartPoint {
+  final String semester;
+  final double performance;
+
+  const RadarChartPoint({
+    required this.semester,
+    required this.performance,
+  });
+}
+
+class ChartData {
+  final List<LineChartPoint> lineChart;
+  final List<RadarChartPoint> radarChart;
+
+  const ChartData({
+    required this.lineChart,
+    required this.radarChart,
+  });
 }
 
 String _stringValue(Map<String, dynamic> json, List<String> keys) {
@@ -528,80 +577,20 @@ double? _nullableDoubleValue(Map<String, dynamic> json, List<String> keys) {
   return null;
 }
 
-int? _resolveFinalMarks(FlatResultRecord record) {
-  if (record.finalMarks != null) {
-    return record.finalMarks;
-  }
-  if (record.internalMarks == null || record.externalMarks == null) {
-    return null;
-  }
-  return record.internalMarks! + record.externalMarks!;
-}
-
 double _resolvedSemesterCredits(SemesterResult semester) {
-  final calculated = semester.calculatedCredits;
-  if (calculated != null && calculated > 0) {
-    return calculated;
-  }
-  final rawCredits = semester.credits ?? 0;
-  return rawCredits > 0 ? rawCredits : 0;
+  return semester.calculatedCredits ?? 0;
 }
-
-double? _calculateSemesterCredits(List<FlatResultRecord> records) {
-  double totalCredits = 0;
-  for (final record in records) {
-    final credits = _resolveRecordCredits(record);
-    if (credits > 0) {
-      totalCredits += credits;
-    }
-  }
-  if (totalCredits <= 0) {
-    return null;
-  }
-  return totalCredits;
-}
-
-double? _calculateSemesterSgpa(
-  List<FlatResultRecord> records,
-  double? totalCredits,
-) {
-  if (totalCredits == null || totalCredits <= 0) {
-    return null;
-  }
-
-  double totalGradePoints = 0;
-
-  for (final record in records) {
-    final credits = _resolveRecordCredits(record);
-    if (credits <= 0) {
-      continue;
-    }
-    final marks = _resolveFinalMarks(record);
-    if (marks == null) {
-      continue;
-    }
-    final gradePoint = _gradePointFromMarks(marks);
-    totalGradePoints += gradePoint * credits;
-  }
-
-  if (totalGradePoints <= 0) {
-    return null;
-  }
-
-  return totalGradePoints / totalCredits;
-}
-
-double _gradePointFromMarks(int marks) {
+double _gradePointFromMarks(double marks) {
   if (marks >= 90) {
     return 10;
   }
-  if (marks >= 80) {
+  if (marks >= 75) {
     return 9;
   }
-  if (marks >= 70) {
+  if (marks >= 65) {
     return 8;
   }
-  if (marks >= 60) {
+  if (marks >= 55) {
     return 7;
   }
   if (marks >= 50) {
@@ -617,19 +606,15 @@ double _gradePointFromMarks(int marks) {
 }
 
 double _resolveRecordCredits(FlatResultRecord record) {
-  final directCredits = record.credits ?? 0;
-  if (directCredits > 0) {
-    return directCredits;
+  final lookupCredits = CreditCatalog.lookup(record.paperCode);
+  if (lookupCredits != null) {
+    return lookupCredits;
   }
-  final lookupCredits = CreditCatalog.lookup(record.paperCode) ?? 0;
-  return lookupCredits > 0 ? lookupCredits : 0;
-}
-
-double? _positiveOrNull(double? value) {
-  if (value == null) {
-    return null;
+  final normalized = record.paperCode.trim().toUpperCase();
+  if (normalized.endsWith('P') || normalized.contains('LAB')) {
+    return 1;
   }
-  return value > 0 ? value : null;
+  return 4;
 }
 
 bool _boolValue(Map<String, dynamic> json, List<String> keys) {
@@ -663,107 +648,209 @@ List<dynamic> _listValue(Map<String, dynamic> json, List<String> keys) {
   return const [];
 }
 
-// Dummy data - Real student result
-final dummyResult = StudentResult(
-  enrollmentNumber: '01013303122',
-  studentName: 'Abhishek Tiwari',
-  totalMarks: 685,
-  maxMarks: 1000,
-  percentage: 68.5,
-  creditMarks: 1552,
-  maxCreditMarks: 2500,
-  sgpa: 6.96,
-  subjects: [
-    Subject(
-      name: 'Electrical Science Lab',
-      credits: 1,
-      internalMarks: 36,
-      externalMarks: 56,
-      totalMarks: 92,
-      grade: 'O',
-      paperId: '31159',
-      isHighest: true,
-    ),
-    Subject(
-      name: 'Engineering Graphics-I',
-      credits: 2,
-      internalMarks: 33,
-      externalMarks: 51,
-      totalMarks: 84,
-      grade: 'A+',
-      paperId: '31157',
-    ),
-    Subject(
-      name: 'Applied Chemistry',
-      credits: 1,
-      internalMarks: 36,
-      externalMarks: 55,
-      totalMarks: 91,
-      grade: 'O',
-      paperId: '31155',
-    ),
-    Subject(
-      name: 'Physics - I Lab',
-      credits: 1,
-      internalMarks: 34,
-      externalMarks: 49,
-      totalMarks: 83,
-      grade: 'A+',
-      paperId: '31151',
-    ),
-    Subject(
-      name: 'Manufacturing Process',
-      credits: 4,
-      internalMarks: 20,
-      externalMarks: 48,
-      totalMarks: 68,
-      grade: 'A',
-      paperId: '31119',
-    ),
-    Subject(
-      name: 'Communications Skills',
-      credits: 3,
-      internalMarks: 19,
-      externalMarks: 56,
-      totalMarks: 75,
-      grade: 'A+',
-      paperId: '31113',
-    ),
-    Subject(
-      name: 'Applied Mathematics - I',
-      credits: 4,
-      internalMarks: 14,
-      externalMarks: 31,
-      totalMarks: 45,
-      grade: 'C',
-      paperId: '31111',
-    ),
-    Subject(
-      name: 'Electrical Science',
-      credits: 3,
-      internalMarks: 20,
-      externalMarks: 20,
-      totalMarks: 40,
-      grade: 'P',
-      paperId: '31107',
-    ),
-    Subject(
-      name: 'Applied Physics - I',
-      credits: 3,
-      internalMarks: 18,
-      externalMarks: 21,
-      totalMarks: 40,
-      grade: 'P',
-      paperId: '31105',
-    ),
-    Subject(
-      name: 'Applied Chemistry',
-      credits: 3,
-      internalMarks: 17,
-      externalMarks: 50,
-      totalMarks: 67,
-      grade: 'A',
-      paperId: '31103',
-    ),
-  ],
-);
+int? _resolveFinalMarks(FlatResultRecord record) {
+  return record.finalMarks;
+}
+
+bool _isPassed(FlatResultRecord record) {
+  final marks = _resolveFinalMarks(record) ?? 0;
+  return marks >= 40;
+}
+
+int _attemptTimestamp(FlatResultRecord record) {
+  final parsed = DateTime.tryParse(record.declaredDate);
+  if (parsed != null) {
+    return parsed.millisecondsSinceEpoch;
+  }
+  final year = int.tryParse(record.resultYear) ?? 0;
+  final month = int.tryParse(record.resultMonth) ?? 0;
+  final safeMonth = month > 0 ? month : 1;
+  return DateTime.utc(year, safeMonth, 1).millisecondsSinceEpoch;
+}
+
+List<FlatResultRecord> _filterUniqueSubjects(List<FlatResultRecord> records) {
+  final subjectMap = <String, FlatResultRecord>{};
+  for (final record in records) {
+    final key = record.paperCode;
+    final existing = subjectMap[key];
+    if (existing == null) {
+      subjectMap[key] = record;
+      continue;
+    }
+    final existingTimestamp = _attemptTimestamp(existing);
+    final currentTimestamp = _attemptTimestamp(record);
+    if (currentTimestamp >= existingTimestamp) {
+      subjectMap[key] = record;
+    }
+  }
+  return subjectMap.values.toList();
+}
+
+_SemesterMetrics _calculateSemesterMetrics(List<FlatResultRecord> records) {
+  final uniqueSubjects = _filterUniqueSubjects(records);
+  final passedSubjects = uniqueSubjects.where(_isPassed);
+
+  double totalMarks = 0;
+  double sgpaCredits = 0;
+  double totalWeightedGp = 0;
+
+  for (final record in passedSubjects) {
+    final marks = (_resolveFinalMarks(record) ?? 0).toDouble();
+    totalMarks += marks;
+    final credits = _resolveRecordCredits(record);
+    final gradePoint = _gradePointFromMarks(marks);
+    totalWeightedGp += gradePoint * credits;
+    sgpaCredits += credits;
+  }
+
+  final semesterCredits = uniqueSubjects.fold<double>(
+    0,
+    (sum, record) => sum + _resolveRecordCredits(record),
+  );
+
+  final maxMarks = passedSubjects.length * 100.0;
+  final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
+  final sgpa = sgpaCredits > 0 ? totalWeightedGp / sgpaCredits : 0.0;
+
+  return _SemesterMetrics(
+    totalMarks: totalMarks,
+    maxMarks: maxMarks,
+    percentage: percentage,
+    semesterCredits: semesterCredits,
+    sgpa: sgpa,
+  );
+}
+
+class _SemesterMetrics {
+  final double totalMarks;
+  final double maxMarks;
+  final double percentage;
+  final double semesterCredits;
+  final double sgpa;
+
+  const _SemesterMetrics({
+    required this.totalMarks,
+    required this.maxMarks,
+    required this.percentage,
+    required this.semesterCredits,
+    required this.sgpa,
+  });
+}
+
+List<double> _calculateProgressiveCgpa(List<SemesterResult> semesters) {
+  double totalCredits = 0;
+  double totalWeightedSgpa = 0;
+  final result = <double>[];
+
+  for (final semester in semesters) {
+    final credits = semester.calculatedCredits ?? 0;
+    final sgpa = semester.calculatedSgpa ?? 0;
+    if (credits > 0) {
+      totalCredits += credits;
+      totalWeightedSgpa += sgpa * credits;
+    }
+    final cgpa = totalCredits > 0 ? totalWeightedSgpa / totalCredits : 0.0;
+    result.add(cgpa);
+  }
+
+  return result;
+}
+
+List<SemesterResult> _sortedSemesters(List<SemesterResult> semesters) {
+  final ordered = List<SemesterResult>.from(semesters);
+  ordered.sort((a, b) => a.semester.compareTo(b.semester));
+  return ordered;
+}
+
+List<CumulativeData> calculateSemesterCumulativeData(
+  List<SemesterResult> semesters,
+) {
+  final ordered = _sortedSemesters(semesters);
+  final progressiveCgpa = _calculateProgressiveCgpa(ordered);
+
+  return ordered.asMap().entries.map((entry) {
+    final index = entry.key;
+    final prevSems = ordered.sublist(0, index + 1);
+    final totalMarks =
+        prevSems.fold<double>(0, (sum, s) => sum + s.totalMarks);
+    final maxMarks =
+        prevSems.fold<double>(0, (sum, s) => sum + s.maxMarks);
+    final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
+    final cgpa = progressiveCgpa[index];
+    final semLabel = index == 0
+        ? 'Sem 1'
+        : 'Sem ${List.generate(index + 1, (i) => i + 1).join('+')}';
+
+    return CumulativeData(
+      semester: semLabel,
+      marks: '${totalMarks.toStringAsFixed(0)} / ${maxMarks.toStringAsFixed(0)}',
+      percentage: percentage.toStringAsFixed(2),
+      gpa: cgpa.toStringAsFixed(2),
+    );
+  }).toList();
+}
+
+List<CumulativeData> calculateYearCumulativeData(
+  List<SemesterResult> semesters,
+) {
+  final ordered = _sortedSemesters(semesters);
+  final progressiveCgpa = _calculateProgressiveCgpa(ordered);
+  final years = <List<SemesterResult>>[];
+
+  for (var i = 0; i < ordered.length; i += 2) {
+    years.add(ordered.sublist(i, (i + 2).clamp(0, ordered.length)));
+  }
+
+  return years.asMap().entries.map((entry) {
+    final yearIndex = entry.key;
+    final allSemsUpToYear =
+        ordered.sublist(0, ((yearIndex + 1) * 2).clamp(0, ordered.length));
+    final totalMarks =
+        allSemsUpToYear.fold<double>(0, (sum, s) => sum + s.totalMarks);
+    final maxMarks =
+        allSemsUpToYear.fold<double>(0, (sum, s) => sum + s.maxMarks);
+    final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
+    final lastSemIndex =
+        ((yearIndex + 1) * 2 - 1).clamp(0, ordered.length - 1);
+    final cgpa = progressiveCgpa[lastSemIndex];
+    final yearLabel = yearIndex == 0
+        ? 'Year 1'
+        : 'Year ${List.generate(yearIndex + 1, (i) => i + 1).join('+')}';
+
+    return CumulativeData(
+      semester: yearLabel,
+      marks: '${totalMarks.toStringAsFixed(0)} / ${maxMarks.toStringAsFixed(0)}',
+      percentage: percentage.toStringAsFixed(2),
+      gpa: cgpa.toStringAsFixed(2),
+    );
+  }).toList();
+}
+
+List<CumulativeData> calculateCumulativeData(List<SemesterResult> semesters) {
+  return calculateSemesterCumulativeData(semesters);
+}
+
+ChartData generateChartData(List<SemesterResult> semesters) {
+  final ordered = _sortedSemesters(semesters);
+  return ChartData(
+    lineChart: ordered
+        .map(
+          (sem) => LineChartPoint(
+            name: 'Sem ${sem.semester}',
+            sgpa: double.parse((sem.calculatedSgpa ?? 0).toStringAsFixed(2)),
+            percentage: double.parse(sem.percentage.toStringAsFixed(2)),
+          ),
+        )
+        .toList(),
+    radarChart: ordered
+        .map(
+          (sem) => RadarChartPoint(
+            semester: 'S${sem.semester}',
+            performance:
+                double.parse((sem.calculatedSgpa ?? 0).toStringAsFixed(1)),
+          ),
+        )
+        .toList(),
+  );
+}
+

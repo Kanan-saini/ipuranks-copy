@@ -9,7 +9,7 @@ class LiquidBackground extends StatefulWidget {
   const LiquidBackground({
     Key? key,
     required this.child,
-    this.primaryColor = const Color(0xFF84cc16),
+    this.primaryColor = const Color(0xFF38BDF8),
   }) : super(key: key);
 
   @override
@@ -85,9 +85,9 @@ class _LiquidBackgroundState extends State<LiquidBackground>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF0a0e27),
-              const Color(0xFF1a1f3a),
-              const Color(0xFF0f1421),
+              const Color(0xFF070B16),
+              const Color(0xFF0B132B),
+              const Color(0xFF0F1B3D),
             ],
           ),
         ),
@@ -108,12 +108,12 @@ class _LiquidBackgroundState extends State<LiquidBackground>
                         height: 300,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: widget.primaryColor.withOpacity(0.08),
+                          color: widget.primaryColor.withOpacity(0.10),
                           boxShadow: [
                             BoxShadow(
-                              color: widget.primaryColor.withOpacity(0.1),
-                              blurRadius: 60,
-                              spreadRadius: 20,
+                              color: widget.primaryColor.withOpacity(0.18),
+                              blurRadius: 70,
+                              spreadRadius: 18,
                             ),
                           ],
                         ),
@@ -129,12 +129,12 @@ class _LiquidBackgroundState extends State<LiquidBackground>
                         height: 350,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF6366f1).withOpacity(0.05),
+                          color: const Color(0xFF3B82F6).withOpacity(0.08),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF6366f1).withOpacity(0.08),
-                              blurRadius: 70,
-                              spreadRadius: 25,
+                              color: const Color(0xFF3B82F6).withOpacity(0.14),
+                              blurRadius: 80,
+                              spreadRadius: 22,
                             ),
                           ],
                         ),
@@ -150,12 +150,12 @@ class _LiquidBackgroundState extends State<LiquidBackground>
                         height: 200,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color.fromARGB(255, 56, 59, 141).withOpacity(0.04),
+                          color: const Color(0xFF7C3AED).withOpacity(0.07),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFec4899).withOpacity(0.06),
-                              blurRadius: 50,
-                              spreadRadius: 15,
+                              color: const Color(0xFF7C3AED).withOpacity(0.12),
+                              blurRadius: 60,
+                              spreadRadius: 16,
                             ),
                           ],
                         ),
@@ -188,10 +188,10 @@ class _LiquidBackgroundState extends State<LiquidBackground>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: widget.primaryColor
-                                .withOpacity(0.05 * (1 - progress)),
+                                .withOpacity(0.07 * (1 - progress)),
                             border: Border.all(
                               color: widget.primaryColor
-                                  .withOpacity(0.1 * (1 - progress)),
+                                  .withOpacity(0.14 * (1 - progress)),
                               width: 1.5,
                             ),
                           ),
@@ -219,7 +219,7 @@ class _LiquidBackgroundState extends State<LiquidBackground>
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: widget.primaryColor
-                              .withOpacity((1 - value) * 0.5),
+                              .withOpacity((1 - value) * 0.6),
                           width: 2,
                         ),
                       ),

@@ -34,17 +34,24 @@ class SubjectRow extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF0B132B).withOpacity(0.75),
+              const Color(0xFF0F1B3D).withOpacity(0.55),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1.5,
+            color: Colors.white.withOpacity(0.12),
+            width: 1.3,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF3B82F6).withOpacity(0.14),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -60,6 +67,23 @@ class SubjectRow extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _getGradeColor(subject.grade),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _getGradeColor(subject.grade)
+                                      .withOpacity(0.6),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               subject.name,
@@ -80,13 +104,13 @@ class SubjectRow extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF84cc16),
+                                color: const Color(0xFF38BDF8),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
                                 'Highest',
                                 style: TextStyle(
-                                  color: Color(0xFF0a0e27),
+                                  color: Colors.white,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -125,7 +149,7 @@ class SubjectRow extends StatelessWidget {
                     Text(
                       '${subject.totalMarks}/100',
                       style: const TextStyle(
-                        color: Color(0xFF84cc16),
+                        color: Color(0xFF38BDF8),
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -149,13 +173,17 @@ class SubjectRow extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: _getGradeColor(subject.grade),
+                        borderRadius: BorderRadius.circular(10),
+                        color: _getGradeColor(subject.grade).withOpacity(0.2),
+                        border: Border.all(
+                          color: _getGradeColor(subject.grade)
+                              .withOpacity(0.7),
+                        ),
                       ),
                       child: Text(
                         subject.grade,
                         style: const TextStyle(
-                          color: Color(0xFF0a0e27),
+                          color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
@@ -209,17 +237,17 @@ class SubjectRow extends StatelessWidget {
   Color _getGradeColor(String grade) {
     switch (grade) {
       case 'O':
-        return const Color(0xFF84cc16); // Neon green for Outstanding
+        return const Color(0xFF38BDF8); // Neon blue for Outstanding
       case 'A+':
-        return const Color(0xFF84cc16); // Neon green
+        return const Color(0xFF38BDF8); // Neon blue
       case 'A':
-        return const Color(0xFF6366f1); // Purple/Blue
+        return const Color(0xFF3B82F6); // Electric blue
       case 'C':
-        return const Color(0xFFf97316); // Orange
+        return const Color(0xFFF59E0B); // Amber
       case 'P':
-        return const Color(0xFFec4899); // Pink
+        return const Color(0xFF7C3AED); // Purple
       default:
-        return const Color(0xFF84cc16);
+        return const Color(0xFF38BDF8);
     }
   }
 
@@ -237,7 +265,7 @@ class SubjectRow extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFF84cc16),
+            color: Color(0xFF38BDF8),
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),

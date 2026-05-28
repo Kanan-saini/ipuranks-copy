@@ -39,9 +39,9 @@ class AuthService {
 
       client.close();
 
-      final data = jsonDecode(response.body);
+      final Map<String, dynamic> parsed = _parseResponseBody(response);
 
-      return LoginResponse.fromJson(data);
+      return LoginResponse.fromJson(parsed);
     } on SocketException {
       return LoginResponse(
         success: false,
@@ -59,5 +59,29 @@ class AuthService {
         raw: const {},
       );
     }
+  }
+
+  Map<String, dynamic> _parseResponseBody(http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        final data = Map<String, dynamic>.from(decoded);
+        data.putIfAbsent('statusCode', () => response.statusCode);
+        if (data['message'] == null && response.body.trim().isNotEmpty) {
+          data['message'] = response.body.trim();
+        }
+        return data;
+      }
+    } catch (_) {
+      // Fall through to a safe, readable fallback map.
+    }
+
+    return {
+      'success': false,
+      'message': response.body.trim().isNotEmpty
+          ? response.body.trim()
+          : 'Login Failed',
+      'statusCode': response.statusCode,
+    };
   }
 }

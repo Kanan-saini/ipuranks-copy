@@ -18,15 +18,32 @@ class SemesterCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.05),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1.5,
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF0B132B).withOpacity(0.7),
+            const Color(0xFF0F1B3D).withOpacity(0.55),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.14),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF38BDF8).withOpacity(0.14),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          iconTheme: const IconThemeData(color: Color(0xFF7DD3FC)),
+        ),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -45,13 +62,13 @@ class SemesterCard extends StatelessWidget {
               _buildSummaryChip(
                 'SGPA',
                 _formatNumber(_resolveSgpa(), decimals: 2),
-                const Color(0xFF6366f1),
+                const Color(0xFF3B82F6),
               ),
               const SizedBox(width: 8),
               _buildSummaryChip(
                 'Credits',
                 _formatNumber(_resolveCredits(), decimals: 0),
-                const Color(0xFF84cc16),
+                const Color(0xFF38BDF8),
               ),
             ],
           ),

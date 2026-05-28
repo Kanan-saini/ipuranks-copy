@@ -52,7 +52,7 @@ class _ResultCardState extends State<ResultCard>
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(30),
             ),
-            color: const Color(0xFF0a0e27),
+            color: const Color(0xFF070B16),
             border: Border(
               top: BorderSide(
                 color: Colors.white.withOpacity(0.1),
@@ -103,16 +103,23 @@ class _ResultCardState extends State<ResultCard>
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(0.05),
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF0B132B).withOpacity(0.7),
+                const Color(0xFF0F1B3D).withOpacity(0.55),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             border: Border.all(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withOpacity(0.12),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+                color: const Color(0xFF38BDF8).withOpacity(0.16),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
@@ -124,7 +131,7 @@ class _ResultCardState extends State<ResultCard>
                   _buildInfoColumn(
                     'Marks',
                     '${widget.result.totalMarks}/${widget.result.maxMarks}',
-                    const Color(0xFF84cc16),
+                    const Color(0xFF38BDF8),
                   ),
                   Container(
                     width: 1.5,
@@ -134,7 +141,7 @@ class _ResultCardState extends State<ResultCard>
                   _buildInfoColumn(
                     'Percentage',
                     '${widget.result.percentage}%',
-                    const Color(0xFF6366f1),
+                    const Color(0xFF3B82F6),
                   ),
                 ],
               ),
@@ -150,7 +157,7 @@ class _ResultCardState extends State<ResultCard>
                   _buildInfoColumn(
                     'Credit Marks',
                     '${widget.result.creditMarks}/${widget.result.maxCreditMarks}',
-                    const Color(0xFFec4899),
+                    const Color(0xFF7C3AED),
                   ),
                   Container(
                     width: 1.5,
@@ -160,7 +167,7 @@ class _ResultCardState extends State<ResultCard>
                   _buildInfoColumn(
                     'SGPA',
                     widget.result.sgpa.toString(),
-                    const Color(0xFF84cc16),
+                    const Color(0xFF38BDF8),
                   ),
                 ],
               ),
@@ -200,9 +207,16 @@ class _ResultCardState extends State<ResultCard>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white.withOpacity(0.03),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF0B132B).withOpacity(0.7),
+            const Color(0xFF0F1B3D).withOpacity(0.55),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.12),
           width: 1.5,
         ),
       ),
@@ -255,7 +269,7 @@ class _ResultCardState extends State<ResultCard>
           height: 32,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: value ? const Color(0xFF84cc16) : Colors.white.withOpacity(0.1),
+            color: value ? const Color(0xFF38BDF8) : Colors.white.withOpacity(0.1),
           ),
           child: GestureDetector(
             onTap: () => onChanged(!value),
@@ -271,7 +285,7 @@ class _ResultCardState extends State<ResultCard>
                       height: 26,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF0a0e27),
+                        color: const Color(0xFF070B16),
                       ),
                     ),
                   ),
@@ -296,7 +310,7 @@ class _ResultCardState extends State<ResultCard>
             fontWeight: FontWeight.w700,
             shadows: [
               Shadow(
-                color: const Color(0xFF84cc16).withOpacity(0.3),
+                color: const Color(0xFF38BDF8).withOpacity(0.35),
                 blurRadius: 10,
               ),
             ],
