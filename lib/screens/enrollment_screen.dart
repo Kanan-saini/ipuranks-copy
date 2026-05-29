@@ -4,12 +4,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/env.dart';
 import '../models/login_response.dart';
 import '../services/auth_service.dart';
 import '../services/http_client_factory.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/input_field.dart';
 import '../widgets/liquid_background.dart';
+import '../services/session_storage.dart';
 import 'result_dashboard.dart';
 
 class EnrollmentScreen extends StatefulWidget {
@@ -35,8 +37,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
   String? _captchaError;
   String? _captchaSessionId;
 
-  static const String _captchaEndpoint =
-      'https://ipuranks.abhii.app/api/v1/captcha/generate';
+  static const String _captchaPath = '/api/v1/captcha/generate';
 
   @override
   void initState() {
@@ -78,8 +79,8 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
 
     final client = createHttpClient();
     try {
-      final response = await client
-          .get(Uri.parse(_captchaEndpoint))
+        final response = await client
+          .get(Env.buildUri(_captchaPath))
           .timeout(const Duration(seconds: 12));
 
       _captchaSessionId =
@@ -171,6 +172,8 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
 
     if (response.success) {
       final groupedResult = response.groupedResult;
+
+      await SessionStorage.saveLoginResponse(response);
 
       if (!mounted) {
         return;

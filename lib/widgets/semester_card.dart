@@ -67,7 +67,7 @@ class SemesterCard extends StatelessWidget {
               const SizedBox(width: 8),
               _buildSummaryChip(
                 'Credits',
-                _formatNumber(_resolveCredits(), decimals: 0),
+                _resolveCreditsLabel(),
                 const Color(0xFF38BDF8),
               ),
             ],
@@ -137,13 +137,19 @@ class SemesterCard extends StatelessWidget {
     return null;
   }
 
-  double? _resolveCredits() {
-    if (result.calculatedCredits != null && result.calculatedCredits! > 0) {
-      return result.calculatedCredits;
+  String _resolveCreditsLabel() {
+    final registered = result.registeredCredits ?? result.calculatedCredits;
+    final secured = result.securedCredits;
+
+    if (registered != null && registered > 0 && secured != null) {
+      return '${secured.toStringAsFixed(0)}/${registered.toStringAsFixed(0)}';
     }
-    if (result.credits != null && result.credits! > 0) {
-      return result.credits;
+
+    final fallback = registered ?? result.credits;
+    if (fallback != null && fallback > 0) {
+      return fallback.toStringAsFixed(0);
     }
-    return null;
+
+    return '-';
   }
 }

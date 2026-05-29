@@ -11,14 +11,15 @@ class CreditCatalogService {
     final catalog = <String, double>{};
 
     raw.forEach((key, value) {
+      final normalizedKey = key.toString().trim().toUpperCase();
       if (value is num) {
-        catalog[key.toString()] = value.toDouble();
+        catalog[normalizedKey] = value.toDouble();
         return;
       }
       if (value is String) {
         final parsed = double.tryParse(value.trim());
         if (parsed != null) {
-          catalog[key.toString()] = parsed;
+          catalog[normalizedKey] = parsed;
         }
       }
     });

@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../config/env.dart';
 import '../models/login_response.dart';
 import 'http_client_factory.dart';
 
 class AuthService {
-  static const String _loginEndpoint =
-      'https://ipuranks.abhii.app/api/v1/user/login';
+  static const String _loginPath = '/api/v1/user/login';
 
   Future<LoginResponse> login({
     required String enrollmentNumber,
@@ -20,7 +20,7 @@ class AuthService {
       final client = createHttpClient();
 
       final response = await client.post(
-        Uri.parse(_loginEndpoint),
+        Env.buildUri(_loginPath),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',

@@ -274,6 +274,8 @@ class SemesterResult {
   final List<FlatResultRecord> subjects;
   final double? calculatedSgpa;
   final double? calculatedCredits;
+  final double? registeredCredits;
+  final double? securedCredits;
   final double totalMarks;
   final double maxMarks;
   final double percentage;
@@ -285,6 +287,8 @@ class SemesterResult {
     required this.subjects,
     required this.calculatedSgpa,
     required this.calculatedCredits,
+    required this.registeredCredits,
+    required this.securedCredits,
     required this.totalMarks,
     required this.maxMarks,
     required this.percentage,
@@ -306,6 +310,15 @@ class SemesterResult {
       ..sort((a, b) => a.paperCode.compareTo(b.paperCode));
     final metrics = _calculateSemesterMetrics(records);
 
+    _debugLog(
+      'Credits debug - sem $semester | '
+      'sgpaCredits=${metrics.semesterCredits.toStringAsFixed(1)} '
+      'registered=${metrics.registeredCredits.toStringAsFixed(1)} '
+      'secured=${metrics.securedCredits.toStringAsFixed(1)} '
+      'subjects=${metrics.subjectCount} '
+      'missingCatalog=${metrics.missingCatalogCodes.isEmpty ? "none" : metrics.missingCatalogCodes.join(", ")}',
+    );
+
     return SemesterResult(
       semester: semester,
       gpa: gpa,
@@ -313,6 +326,8 @@ class SemesterResult {
       subjects: subjectsForDisplay,
       calculatedSgpa: metrics.sgpa,
       calculatedCredits: metrics.semesterCredits,
+      registeredCredits: metrics.registeredCredits,
+      securedCredits: metrics.securedCredits,
       totalMarks: metrics.totalMarks,
       maxMarks: metrics.maxMarks,
       percentage: metrics.percentage,
@@ -336,6 +351,7 @@ class GroupedResult {
 
     double totalCredits = 0;
     double weightedSgpa = 0;
+    final programTotals = _calculateProgramCreditTotals(semesters);
 
     for (final semester in validSemesters) {
       final credits = _resolvedSemesterCredits(semester);
@@ -349,9 +365,20 @@ class GroupedResult {
 
     final cgpa = totalCredits > 0 ? weightedSgpa / totalCredits : 0.0;
 
+    _debugLog(
+      'Credits debug - cumulative | '
+      'sgpaCredits=${totalCredits.toStringAsFixed(1)} '
+      'registered=${programTotals.registeredCredits.toStringAsFixed(1)} '
+      'secured=${programTotals.securedCredits.toStringAsFixed(1)} '
+      'uniqueSubjects=${programTotals.subjectCount} '
+      'missingCatalog=${programTotals.missingCatalogCodes.isEmpty ? "none" : programTotals.missingCatalogCodes.join(", ")} '
+      'semesters=${validSemesters.length}',
+    );
+
     return ResultSummary(
       cgpa: cgpa,
-      totalCredits: totalCredits > 0 ? totalCredits : 0.0,
+      totalCredits:
+          programTotals.securedCredits > 0 ? programTotals.securedCredits : 0.0,
       semestersCompleted: validSemesters.length,
     );
   }
@@ -482,53 +509,59 @@ String _stringValue(Map<String, dynamic> json, List<String> keys) {
 int _intValue(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
-    if (value is int) {
-      return value;
-    }
-    if (value is double) {
-      return value.round();
-    }
+
+    if (value is int) return value;
+
+    if (value is double) return value.round();
+
     if (value is String) {
-      final parsed = int.tryParse(value);
-      if (parsed != null) {
-        return parsed;
+      final cleaned =
+          value.trim().replaceAll(RegExp(r'[^0-9]'), '');
+
+      if (cleaned.isNotEmpty) {
+        final parsed = int.tryParse(cleaned);
+        if (parsed != null) {
+          return parsed;
+        }
       }
-      final parsedDouble = double.tryParse(value);
+
+      final parsedDouble = double.tryParse(cleaned);
       if (parsedDouble != null) {
         return parsedDouble.round();
       }
     }
   }
+
   return 0;
 }
 
 int? _nullableIntValue(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
-    if (value == null) {
-      continue;
-    }
-    if (value is int) {
-      return value;
-    }
-    if (value is double) {
-      return value.round();
-    }
+
+    if (value == null) continue;
+
+    if (value is int) return value;
+
+    if (value is double) return value.round();
+
     if (value is String) {
       final trimmed = value.trim();
-      if (trimmed.isEmpty) {
-        continue;
-      }
-      final parsed = int.tryParse(trimmed);
-      if (parsed != null) {
-        return parsed;
-      }
-      final parsedDouble = double.tryParse(trimmed);
-      if (parsedDouble != null) {
-        return parsedDouble.round();
+
+      if (trimmed.isEmpty) continue;
+
+      // Handles: 40*, 42#, 55A etc.
+      final cleaned = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+
+      if (cleaned.isNotEmpty) {
+        final parsed = int.tryParse(cleaned);
+        if (parsed != null) {
+          return parsed;
+        }
       }
     }
   }
+
   return null;
 }
 
@@ -580,6 +613,45 @@ double? _nullableDoubleValue(Map<String, dynamic> json, List<String> keys) {
 double _resolvedSemesterCredits(SemesterResult semester) {
   return semester.calculatedCredits ?? 0;
 }
+
+class _SemesterMetrics {
+  final double totalMarks;
+  final double maxMarks;
+  final double percentage;
+  final double semesterCredits;
+  final double registeredCredits;
+  final double securedCredits;
+  final double sgpa;
+  final List<String> missingCatalogCodes;
+  final int subjectCount;
+
+  const _SemesterMetrics({
+    required this.totalMarks,
+    required this.maxMarks,
+    required this.percentage,
+    required this.semesterCredits,
+    required this.registeredCredits,
+    required this.securedCredits,
+    required this.sgpa,
+    required this.missingCatalogCodes,
+    required this.subjectCount,
+  });
+}
+
+class _ProgramCreditTotals {
+  final double registeredCredits;
+  final double securedCredits;
+  final int subjectCount;
+  final List<String> missingCatalogCodes;
+
+  const _ProgramCreditTotals({
+    required this.registeredCredits,
+    required this.securedCredits,
+    required this.subjectCount,
+    required this.missingCatalogCodes,
+  });
+}
+
 double _gradePointFromMarks(double marks) {
   if (marks >= 90) {
     return 10;
@@ -615,6 +687,23 @@ double _resolveRecordCredits(FlatResultRecord record) {
     return 1;
   }
   return 4;
+}
+
+double? _catalogCreditsOrNull(FlatResultRecord record) {
+  return CreditCatalog.lookup(record.paperCode);
+}
+
+String _normalizedPaperCode(FlatResultRecord record) {
+  return record.paperCode.trim().toUpperCase();
+}
+
+void _debugLog(String message) {
+  assert(() {
+    // Debug-only logging to avoid noisy output in release builds.
+    // ignore: avoid_print
+    print(message);
+    return true;
+  }());
 }
 
 bool _boolValue(Map<String, dynamic> json, List<String> keys) {
@@ -686,80 +775,112 @@ List<FlatResultRecord> _filterUniqueSubjects(List<FlatResultRecord> records) {
   return subjectMap.values.toList();
 }
 
-_SemesterMetrics _calculateSemesterMetrics(List<FlatResultRecord> records) {
+_SemesterMetrics _calculateSemesterMetrics(
+    List<FlatResultRecord> records) {
   final uniqueSubjects = _filterUniqueSubjects(records);
-  final passedSubjects = uniqueSubjects.where(_isPassed);
 
   double totalMarks = 0;
-  double sgpaCredits = 0;
+  double totalCredits = 0;
+  double registeredCredits = 0;
+  double securedCredits = 0;
   double totalWeightedGp = 0;
+  final missingCatalogCodes = <String>{};
 
-  for (final record in passedSubjects) {
+  for (final record in uniqueSubjects) {
     final marks = (_resolveFinalMarks(record) ?? 0).toDouble();
+    final creditsForSgpa = _resolveRecordCredits(record);
+    final catalogCredits = _catalogCreditsOrNull(record);
+
     totalMarks += marks;
-    final credits = _resolveRecordCredits(record);
-    final gradePoint = _gradePointFromMarks(marks);
-    totalWeightedGp += gradePoint * credits;
-    sgpaCredits += credits;
+    totalCredits += creditsForSgpa;
+
+    if (catalogCredits != null) {
+      registeredCredits += catalogCredits;
+      // Secured credits exclude failed subjects; registered credits include all.
+      if (_isPassed(record)) {
+        securedCredits += catalogCredits;
+      }
+    } else {
+      missingCatalogCodes.add(_normalizedPaperCode(record));
+    }
+
+    final gradePoint =
+        marks >= 40 ? _gradePointFromMarks(marks) : 0.0;
+
+    totalWeightedGp += gradePoint * creditsForSgpa;
   }
 
-  final semesterCredits = uniqueSubjects.fold<double>(
-    0,
-    (sum, record) => sum + _resolveRecordCredits(record),
-  );
+  final maxMarks = uniqueSubjects.length * 100.0;
 
-  final maxMarks = passedSubjects.length * 100.0;
-  final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
-  final sgpa = sgpaCredits > 0 ? totalWeightedGp / sgpaCredits : 0.0;
+  final percentage =
+      maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
+
+  final sgpa =
+      totalCredits > 0 ? totalWeightedGp / totalCredits : 0.0;
 
   return _SemesterMetrics(
     totalMarks: totalMarks,
     maxMarks: maxMarks,
     percentage: percentage,
-    semesterCredits: semesterCredits,
+    semesterCredits: totalCredits,
+    registeredCredits: registeredCredits,
+    securedCredits: securedCredits,
     sgpa: sgpa,
+    missingCatalogCodes: missingCatalogCodes.toList()..sort(),
+    subjectCount: uniqueSubjects.length,
   );
 }
 
-class _SemesterMetrics {
-  final double totalMarks;
-  final double maxMarks;
-  final double percentage;
-  final double semesterCredits;
-  final double sgpa;
+_ProgramCreditTotals _calculateProgramCreditTotals(
+  List<SemesterResult> semesters,
+) {
+  final allRecords = semesters.expand((semester) => semester.subjects).toList();
+  final uniqueSubjects = _filterUniqueSubjects(allRecords);
+  double registeredCredits = 0;
+  double securedCredits = 0;
+  final missingCatalogCodes = <String>{};
 
-  const _SemesterMetrics({
-    required this.totalMarks,
-    required this.maxMarks,
-    required this.percentage,
-    required this.semesterCredits,
-    required this.sgpa,
-  });
-}
-
-List<double> _calculateProgressiveCgpa(List<SemesterResult> semesters) {
-  double totalCredits = 0;
-  double totalWeightedSgpa = 0;
-  final result = <double>[];
-
-  for (final semester in semesters) {
-    final credits = semester.calculatedCredits ?? 0;
-    final sgpa = semester.calculatedSgpa ?? 0;
-    if (credits > 0) {
-      totalCredits += credits;
-      totalWeightedSgpa += sgpa * credits;
+  for (final record in uniqueSubjects) {
+    final catalogCredits = _catalogCreditsOrNull(record);
+    if (catalogCredits != null) {
+      registeredCredits += catalogCredits;
+      if (_isPassed(record)) {
+        securedCredits += catalogCredits;
+      }
+    } else {
+      missingCatalogCodes.add(_normalizedPaperCode(record));
     }
-    final cgpa = totalCredits > 0 ? totalWeightedSgpa / totalCredits : 0.0;
-    result.add(cgpa);
   }
 
-  return result;
+  return _ProgramCreditTotals(
+    registeredCredits: registeredCredits,
+    securedCredits: securedCredits,
+    subjectCount: uniqueSubjects.length,
+    missingCatalogCodes: missingCatalogCodes.toList()..sort(),
+  );
 }
 
 List<SemesterResult> _sortedSemesters(List<SemesterResult> semesters) {
   final ordered = List<SemesterResult>.from(semesters);
   ordered.sort((a, b) => a.semester.compareTo(b.semester));
   return ordered;
+}
+
+List<double> _calculateProgressiveCgpa(List<SemesterResult> semesters) {
+  double totalCredits = 0;
+  double weightedSgpa = 0;
+
+  return semesters.map((semester) {
+    final credits = _resolvedSemesterCredits(semester);
+    final sgpa = semester.calculatedSgpa ?? 0;
+
+    if (credits > 0) {
+      totalCredits += credits;
+      weightedSgpa += sgpa * credits;
+    }
+
+    return totalCredits > 0 ? weightedSgpa / totalCredits : 0.0;
+  }).toList();
 }
 
 List<CumulativeData> calculateSemesterCumulativeData(

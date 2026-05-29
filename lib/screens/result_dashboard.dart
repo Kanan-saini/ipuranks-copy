@@ -3,6 +3,8 @@ import '../models/result_model.dart';
 import '../widgets/liquid_background.dart';
 import '../widgets/semester_card.dart';
 import '../widgets/student_info_card.dart';
+import '../services/session_storage.dart';
+import 'enrollment_screen.dart';
 
 class ResultScreenArgs {
   final GroupedResult? groupedResult;
@@ -62,6 +64,17 @@ class _ResultDashboardState extends State<ResultDashboard>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleLogout() async {
+    await SessionStorage.clearSavedLoginResponse();
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const EnrollmentScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -127,7 +140,7 @@ class _ResultDashboardState extends State<ResultDashboard>
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: _handleLogout,
                         child: TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0, end: 1),
                           duration: const Duration(milliseconds: 1400),
