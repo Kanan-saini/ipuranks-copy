@@ -61,10 +61,7 @@ class StudentResult {
       'totalCreditMarks',
       'total_credit_marks',
     ]);
-    final sgpa = _doubleValue(json, [
-      'sgpa',
-      'SGPA',
-    ]);
+    final sgpa = _doubleValue(json, ['sgpa', 'SGPA']);
 
     final subjectsRaw = _listValue(json, [
       'subjects',
@@ -92,8 +89,9 @@ class StudentResult {
       studentName: studentName,
       totalMarks: totalMarks,
       maxMarks: maxMarks,
-      percentage:
-          percentageFromJson > 0 ? percentageFromJson : computedPercentage,
+      percentage: percentageFromJson > 0
+          ? percentageFromJson
+          : computedPercentage,
       creditMarks: creditMarks,
       maxCreditMarks: maxCreditMarks,
       sgpa: sgpa,
@@ -132,10 +130,7 @@ class Subject {
         'subject_name',
         'paperName',
       ]),
-      credits: _intValue(json, [
-        'credits',
-        'credit',
-      ]),
+      credits: _intValue(json, ['credits', 'credit']),
       internalMarks: _intValue(json, [
         'internalMarks',
         'internal_marks',
@@ -146,27 +141,15 @@ class Subject {
         'external_marks',
         'external',
       ]),
-      totalMarks: _intValue(json, [
-        'totalMarks',
-        'total_marks',
-        'total',
-      ]),
-      grade: _stringValue(json, [
-        'grade',
-        'letterGrade',
-        'letter_grade',
-      ]),
+      totalMarks: _intValue(json, ['totalMarks', 'total_marks', 'total']),
+      grade: _stringValue(json, ['grade', 'letterGrade', 'letter_grade']),
       paperId: _stringValue(json, [
         'paperId',
         'paper_id',
         'paperCode',
         'paper_code',
       ]),
-      isHighest: _boolValue(json, [
-        'isHighest',
-        'highest',
-        'topper',
-      ]),
+      isHighest: _boolValue(json, ['isHighest', 'highest', 'topper']),
     );
   }
 }
@@ -216,13 +199,30 @@ class FlatResultRecord {
       studentName: _stringValue(json, ['stname', 'studentName', 'name']),
       programName: _stringValue(json, ['prgname', 'programName']),
       instituteName: _stringValue(json, ['iname', 'instituteName']),
-      admissionYear: _stringValue(json, ['yoa', 'byoa', 'admissionYear', 'batch']),
+      admissionYear: _stringValue(json, [
+        'yoa',
+        'byoa',
+        'admissionYear',
+        'batch',
+      ]),
       semester: _intValue(json, ['euno', 'semester', 'sem']),
       paperCode: _stringValue(json, ['papercode', 'paperCode', 'paper_code']),
       paperName: _stringValue(json, ['papername', 'paperName', 'subjectName']),
-      internalMarks: _nullableIntValue(json, ['minorprint', 'internal', 'internalMarks']),
-      externalMarks: _nullableIntValue(json, ['majorprint', 'external', 'externalMarks']),
-      finalMarks: _nullableIntValue(json, ['moderatedprint', 'finalMarks', 'totalMarks']),
+      internalMarks: _nullableIntValue(json, [
+        'minorprint',
+        'internal',
+        'internalMarks',
+      ]),
+      externalMarks: _nullableIntValue(json, [
+        'majorprint',
+        'external',
+        'externalMarks',
+      ]),
+      finalMarks: _nullableIntValue(json, [
+        'moderatedprint',
+        'finalMarks',
+        'totalMarks',
+      ]),
       status: _stringValue(json, ['statuscode', 'status', 'resultStatus']),
       resultMonth: _stringValue(json, ['rmonth', 'resultMonth']),
       resultYear: _stringValue(json, ['ryear', 'resultYear']),
@@ -339,10 +339,7 @@ class GroupedResult {
   final StudentInfo student;
   final List<SemesterResult> semesters;
 
-  GroupedResult({
-    required this.student,
-    required this.semesters,
-  });
+  GroupedResult({required this.student, required this.semesters});
 
   ResultSummary get summary {
     final validSemesters = semesters.where(
@@ -377,8 +374,9 @@ class GroupedResult {
 
     return ResultSummary(
       cgpa: cgpa,
-      totalCredits:
-          programTotals.securedCredits > 0 ? programTotals.securedCredits : 0.0,
+      totalCredits: programTotals.securedCredits > 0
+          ? programTotals.securedCredits
+          : 0.0,
       semestersCompleted: validSemesters.length,
     );
   }
@@ -392,7 +390,6 @@ class GroupedResult {
           programName: '',
           instituteName: '',
           admissionYear: '',
-          
         ),
         semesters: const [],
       );
@@ -404,10 +401,11 @@ class GroupedResult {
       grouped.putIfAbsent(semesterKey, () => []).add(record);
     }
 
-    final semesters = grouped.entries
-        .map((entry) => SemesterResult.fromRecords(entry.key, entry.value))
-        .toList()
-      ..sort((a, b) => a.semester.compareTo(b.semester));
+    final semesters =
+        grouped.entries
+            .map((entry) => SemesterResult.fromRecords(entry.key, entry.value))
+            .toList()
+          ..sort((a, b) => a.semester.compareTo(b.semester));
 
     return GroupedResult(
       student: StudentInfo.fromRecord(records.first),
@@ -429,21 +427,45 @@ class ResultSummary {
 }
 
 class CreditCatalog {
-  static Map<String, double> _catalog = const {};
+  static Map<String, double> _catalogExact = const {};
+  static Map<String, double> _catalogNormalized = const {};
 
   static void setCatalog(Map<String, double> catalog) {
-    _catalog = catalog;
+    final exact = <String, double>{};
+    final normalized = <String, double>{};
+
+    catalog.forEach((key, value) {
+      final upper = key.trim().toUpperCase();
+      if (upper.isEmpty) {
+        return;
+      }
+      exact.putIfAbsent(upper, () => value);
+
+      final normalizedKey = _normalizePaperCode(upper);
+      if (normalizedKey.isEmpty) {
+        return;
+      }
+      normalized.putIfAbsent(normalizedKey, () => value);
+    });
+
+    _catalogExact = exact;
+    _catalogNormalized = normalized;
   }
 
   static double? lookup(String code) {
-    if (_catalog.isEmpty) {
+    if (_catalogExact.isEmpty && _catalogNormalized.isEmpty) {
       return null;
     }
-    final normalized = code.trim().toUpperCase();
-    if (normalized.isEmpty) {
+    final upper = code.trim().toUpperCase();
+    if (upper.isEmpty) {
       return null;
     }
-    return _catalog[normalized];
+    final exact = _catalogExact[upper];
+    if (exact != null) {
+      return exact;
+    }
+    final normalized = _catalogNormalized[_normalizePaperCode(upper)];
+    return normalized;
   }
 }
 
@@ -477,20 +499,14 @@ class RadarChartPoint {
   final String semester;
   final double performance;
 
-  const RadarChartPoint({
-    required this.semester,
-    required this.performance,
-  });
+  const RadarChartPoint({required this.semester, required this.performance});
 }
 
 class ChartData {
   final List<LineChartPoint> lineChart;
   final List<RadarChartPoint> radarChart;
 
-  const ChartData({
-    required this.lineChart,
-    required this.radarChart,
-  });
+  const ChartData({required this.lineChart, required this.radarChart});
 }
 
 String _stringValue(Map<String, dynamic> json, List<String> keys) {
@@ -515,8 +531,7 @@ int _intValue(Map<String, dynamic> json, List<String> keys) {
     if (value is double) return value.round();
 
     if (value is String) {
-      final cleaned =
-          value.trim().replaceAll(RegExp(r'[^0-9]'), '');
+      final cleaned = value.trim().replaceAll(RegExp(r'[^0-9]'), '');
 
       if (cleaned.isNotEmpty) {
         final parsed = int.tryParse(cleaned);
@@ -694,7 +709,7 @@ double? _catalogCreditsOrNull(FlatResultRecord record) {
 }
 
 String _normalizedPaperCode(FlatResultRecord record) {
-  return record.paperCode.trim().toUpperCase();
+  return _normalizePaperCode(record.paperCode);
 }
 
 void _debugLog(String message) {
@@ -760,7 +775,7 @@ int _attemptTimestamp(FlatResultRecord record) {
 List<FlatResultRecord> _filterUniqueSubjects(List<FlatResultRecord> records) {
   final subjectMap = <String, FlatResultRecord>{};
   for (final record in records) {
-    final key = record.paperCode;
+    final key = _normalizePaperCode(record.paperCode);
     final existing = subjectMap[key];
     if (existing == null) {
       subjectMap[key] = record;
@@ -775,8 +790,11 @@ List<FlatResultRecord> _filterUniqueSubjects(List<FlatResultRecord> records) {
   return subjectMap.values.toList();
 }
 
-_SemesterMetrics _calculateSemesterMetrics(
-    List<FlatResultRecord> records) {
+String _normalizePaperCode(String code) {
+  return code.trim().replaceAll('-', '').toUpperCase();
+}
+
+_SemesterMetrics _calculateSemesterMetrics(List<FlatResultRecord> records) {
   final uniqueSubjects = _filterUniqueSubjects(records);
 
   double totalMarks = 0;
@@ -804,19 +822,16 @@ _SemesterMetrics _calculateSemesterMetrics(
       missingCatalogCodes.add(_normalizedPaperCode(record));
     }
 
-    final gradePoint =
-        marks >= 40 ? _gradePointFromMarks(marks) : 0.0;
+    final gradePoint = marks >= 40 ? _gradePointFromMarks(marks) : 0.0;
 
     totalWeightedGp += gradePoint * creditsForSgpa;
   }
 
   final maxMarks = uniqueSubjects.length * 100.0;
 
-  final percentage =
-      maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
+  final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
 
-  final sgpa =
-      totalCredits > 0 ? totalWeightedGp / totalCredits : 0.0;
+  final sgpa = totalCredits > 0 ? totalWeightedGp / totalCredits : 0.0;
 
   return _SemesterMetrics(
     totalMarks: totalMarks,
@@ -892,10 +907,8 @@ List<CumulativeData> calculateSemesterCumulativeData(
   return ordered.asMap().entries.map((entry) {
     final index = entry.key;
     final prevSems = ordered.sublist(0, index + 1);
-    final totalMarks =
-        prevSems.fold<double>(0, (sum, s) => sum + s.totalMarks);
-    final maxMarks =
-        prevSems.fold<double>(0, (sum, s) => sum + s.maxMarks);
+    final totalMarks = prevSems.fold<double>(0, (sum, s) => sum + s.totalMarks);
+    final maxMarks = prevSems.fold<double>(0, (sum, s) => sum + s.maxMarks);
     final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
     final cgpa = progressiveCgpa[index];
     final semLabel = index == 0
@@ -904,7 +917,8 @@ List<CumulativeData> calculateSemesterCumulativeData(
 
     return CumulativeData(
       semester: semLabel,
-      marks: '${totalMarks.toStringAsFixed(0)} / ${maxMarks.toStringAsFixed(0)}',
+      marks:
+          '${totalMarks.toStringAsFixed(0)} / ${maxMarks.toStringAsFixed(0)}',
       percentage: percentage.toStringAsFixed(2),
       gpa: cgpa.toStringAsFixed(2),
     );
@@ -924,15 +938,20 @@ List<CumulativeData> calculateYearCumulativeData(
 
   return years.asMap().entries.map((entry) {
     final yearIndex = entry.key;
-    final allSemsUpToYear =
-        ordered.sublist(0, ((yearIndex + 1) * 2).clamp(0, ordered.length));
-    final totalMarks =
-        allSemsUpToYear.fold<double>(0, (sum, s) => sum + s.totalMarks);
-    final maxMarks =
-        allSemsUpToYear.fold<double>(0, (sum, s) => sum + s.maxMarks);
+    final allSemsUpToYear = ordered.sublist(
+      0,
+      ((yearIndex + 1) * 2).clamp(0, ordered.length),
+    );
+    final totalMarks = allSemsUpToYear.fold<double>(
+      0,
+      (sum, s) => sum + s.totalMarks,
+    );
+    final maxMarks = allSemsUpToYear.fold<double>(
+      0,
+      (sum, s) => sum + s.maxMarks,
+    );
     final percentage = maxMarks > 0 ? (totalMarks / maxMarks) * 100 : 0.0;
-    final lastSemIndex =
-        ((yearIndex + 1) * 2 - 1).clamp(0, ordered.length - 1);
+    final lastSemIndex = ((yearIndex + 1) * 2 - 1).clamp(0, ordered.length - 1);
     final cgpa = progressiveCgpa[lastSemIndex];
     final yearLabel = yearIndex == 0
         ? 'Year 1'
@@ -940,7 +959,8 @@ List<CumulativeData> calculateYearCumulativeData(
 
     return CumulativeData(
       semester: yearLabel,
-      marks: '${totalMarks.toStringAsFixed(0)} / ${maxMarks.toStringAsFixed(0)}',
+      marks:
+          '${totalMarks.toStringAsFixed(0)} / ${maxMarks.toStringAsFixed(0)}',
       percentage: percentage.toStringAsFixed(2),
       gpa: cgpa.toStringAsFixed(2),
     );
@@ -967,11 +987,11 @@ ChartData generateChartData(List<SemesterResult> semesters) {
         .map(
           (sem) => RadarChartPoint(
             semester: 'S${sem.semester}',
-            performance:
-                double.parse((sem.calculatedSgpa ?? 0).toStringAsFixed(1)),
+            performance: double.parse(
+              (sem.calculatedSgpa ?? 0).toStringAsFixed(1),
+            ),
           ),
         )
         .toList(),
   );
 }
-

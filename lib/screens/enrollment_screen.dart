@@ -57,8 +57,8 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
           CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
         );
 
+    _resetFormState();
     _animationController.forward();
-    _fetchCaptcha();
   }
 
   @override
@@ -70,11 +70,33 @@ class _EnrollmentScreenState extends State<EnrollmentScreen>
     super.dispose();
   }
 
+  void _resetFormState() {
+    _enrollmentController.text = '';
+    _passwordController.text = '';
+    _captchaController.text = '';
+    _isLoading = false;
+    _showFetchingResults = false;
+    _isCaptchaLoading = false;
+    _captchaBytes = null;
+    _captchaError = null;
+    _captchaSessionId = null;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).clearSnackBars();
+    });
+
+    _fetchCaptcha();
+  }
+
   Future<void> _fetchCaptcha() async {
     setState(() {
       _isCaptchaLoading = true;
       _captchaBytes = null;
       _captchaError = null;
+      _captchaSessionId = null;
     });
 
     final client = createHttpClient();

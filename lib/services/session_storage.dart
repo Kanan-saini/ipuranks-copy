@@ -48,4 +48,13 @@ class SessionStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_loginResponseKey);
   }
+
+  static Future<void> clearAllSessionData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+    } catch (_) {
+      // Ignore failures to avoid blocking logout flow.
+    }
+  }
 }

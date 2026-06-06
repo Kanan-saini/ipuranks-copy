@@ -3,8 +3,7 @@ import '../models/result_model.dart';
 import '../widgets/liquid_background.dart';
 import '../widgets/semester_card.dart';
 import '../widgets/student_info_card.dart';
-import '../services/session_storage.dart';
-import 'enrollment_screen.dart';
+import 'logout_screen.dart';
 
 class ResultScreenArgs {
   final GroupedResult? groupedResult;
@@ -38,6 +37,7 @@ class _ResultDashboardState extends State<ResultDashboard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _showContent = false;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
@@ -67,13 +67,12 @@ class _ResultDashboardState extends State<ResultDashboard>
   }
 
   Future<void> _handleLogout() async {
-    await SessionStorage.clearSavedLoginResponse();
-    if (!mounted) {
+    if (_isLoggingOut || !mounted) {
       return;
     }
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const EnrollmentScreen()),
-      (route) => false,
+    _isLoggingOut = true;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const LogoutScreen()),
     );
   }
 
